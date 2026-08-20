@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Movie Mix | عالم الأفلام</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        /* ألوان جديدة: ذهبي سينمائي وكحلي داكن */
+        :root { --primary: #ffb400; --bg: #05070a; --card: #10141d; --text: #ffffff; }
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Cairo', sans-serif; }
+        body { background: var(--bg); color: var(--text); overflow-x: hidden; }
+
+        /* --- الهيدر --- */
+        header { 
+            background: rgba(10, 14, 23, 0.95); padding: 0 15px; position: fixed; top:0; width:100%; 
+            z-index: 1000; display: flex; align-items: center; height: 65px;
+            border-bottom: 1px solid #1e2533; backdrop-filter: blur(15px);
+        }
+        .header-content { display: flex; align-items: center; width: 100%; gap: 15px; }
+        .logo { color: var(--primary); font-weight: 900; font-size: 22px; text-decoration: none; cursor:pointer; letter-spacing: 1px; }
+        .search-bar { position: relative; flex-grow: 1; }
+        .search-bar input { width: 100%; padding: 10px 40px 10px 15px; background: #1a212e; border: 1px solid #2d3847; border-radius: 10px; color: #fff; outline: none; transition: 0.3s; }
+        .search-bar input:focus { border-color: var(--primary); box-shadow: 0 0 10px rgba(255, 180, 0, 0.2); }
+        .search-bar i { position: absolute; right: 12px; top: 50%; transform: translateY(-50%); color: var(--primary); }
+        .menu-btn { font-size: 24px; cursor: pointer; color: #fff; }
+
+        /* --- البانر السينمائي --- */
+        .hero {
+            width: 100%; height: 450px;
+            position: relative; display: flex; align-items: flex-end; overflow: hidden;
+            background: #000;
+        }
+        .hero-video {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            object-fit: cover; z-index: 1;
+            background: url('https://images.alphacoders.com/938/938931.jpg') center/cover;
+        }
+        .hero::after { 
+            content: ''; position: absolute; inset: 0; 
+            background: linear-gradient(to top, var(--bg) 5%, rgba(0,0,0,0.2) 95%); 
+            z-index: 2;
+        }
+        .hero-info { position: relative; z-index: 10; padding: 40px; max-width: 700px; }
+        .hero-info h1 { font-size: 38px; font-weight: 900; color: var(--primary); text-shadow: 0 4px 15px rgba(0,0,0,0.5); }
+        .hero-info p { color: #ccc; font-size: 16px; margin-top: 10px; font-weight: bold; line-height: 1.5; }
+
+        /* --- القائمة الجانبية --- */
+        .sidebar { position: fixed; top: 0; right: -300px; width: 280px; height: 100%; background: #0a0e17; z-index: 2000; transition: 0.4s; padding: 30px 20px; border-left: 1px solid #1e2533; }
+        .sidebar.active { right: 0; }
+        .sidebar a { display: flex; align-items: center; gap: 15px; color: #fff; text-decoration: none; padding: 15px; border-radius: 12px; margin-bottom: 8px; font-weight: bold; transition: 0.3s; border: 1px solid transparent; }
+        .sidebar a:hover { background: rgba(255, 180, 0, 0.1); border-color: var(--primary); color: var(--primary); }
+        .overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.8); display: none; z-index: 1500; }
+
+        /* --- الشبكة --- */
+        .container { padding: 30px 15px; max-width: 1200px; margin: 0 auto; }
+        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 20px; }
+        .card { background: var(--card); border-radius: 15px; overflow: hidden; cursor: pointer; border: 1px solid #1e2533; transition: 0.4s ease; position: relative; }
+        .card:hover { border-color: var(--primary); transform: translateY(-10px); box-shadow: 0 10px 20px rgba(0,0,0,0.5); }
+        .card img { width: 100%; height: 240px; object-fit: cover; }
+        .card-rating { position: absolute; top: 10px; left: 10px; background: rgba(0,0,0,0.8); color: var(--primary); padding: 3px 8px; border-radius: 6px; font-size: 12px; font-weight: 900; z-index: 5; border: 1px solid var(--primary); }
+        .card-info { padding: 12px; text-align: center; }
+        .card-info h3 { font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-weight: 700; }
+
+        /* --- واجهة التفاصيل والمشغل --- */
+        #details-view { display: none; padding-top: 85px; animation: fadeIn 0.5s; }
+        .back-btn { background: var(--primary); color: #000; border: none; padding: 12px 28px; border-radius: 10px; cursor: pointer; margin-bottom: 25px; font-weight: 900; transition: 0.3s; }
+        .back-btn:hover { transform: scale(1.05); background: #fff; }
+        
+        #inline-player-box { width: 100%; margin: 30px 0; display: none; background: #000; border-radius: 15px; overflow: hidden; border: 2px solid var(--primary); aspect-ratio: 16/9; box-shadow: 0 0 30px rgba(255, 180, 0, 0.15); }
+        #inline-iframe { width: 100%; height: 100%; border: none; }
+
+        .det-container { display: flex; flex-wrap: wrap; gap: 30px; }
+        .det-poster { width: 260px; border-radius: 20px; border: 3px solid #1e2533; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+        .det-info { flex: 1; min-width: 300px; }
+        .det-title { font-size: 34px; font-weight: 900; color: var(--primary); margin-bottom: 15px; }
+        .det-meta { display: flex; gap: 15px; margin-bottom: 20px; color: #aaa; font-weight: bold; font-size: 14px; }
+        .det-overview { color: #ddd; line-height: 1.8; font-size: 16px; margin-bottom: 30px; background: rgba(255,255,255,0.03); padding: 20px; border-radius: 15px; border-right: 4px solid var(--primary); }
+
+        .play-now-btn { width: 100%; padding: 22px; background: var(--primary); color: #000; border: none; border-radius: 15px; font-size: 20px; font-weight: 900; cursor: pointer; transition: 0.3s; display: flex; align-items: center; justify-content: center; gap: 15px; }
+        .play-now-btn:hover { background: #fff; transform: translateY(-3px); }
+
+        #loader { position: fixed; inset: 0; background: var(--bg); display: flex; justify-content: center; align-items: center; z-index: 3000; display: none; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+    </style>
+</head>
+<body>
+
+    <div id="loader"><i class="fas fa-circle-notch fa-spin fa-4x" style="color:var(--primary)"></i></div>
+
+    <header>
+        <div class="header-content">
+            <i class="fas fa-bars menu-btn" onclick="toggleSidebar(true)"></i>
+            <div class="logo" onclick="loadMainMovies()">Movie Mix</div>
+            <div class="search-bar">
+                <i class="fas fa-search"></i>
+                <input type="text" id="searchInput" placeholder="ابحث عن أحدث الأفلام..." onkeypress="if(event.key==='Enter') searchTMDB(this.value)">
+            </div>
+        </div>
+    </header>
+
+    <div class="overlay" id="overlay" onclick="toggleSidebar(false)"></div>
+    <div class="sidebar" id="sidebar">
+        <h2 style="color:var(--primary); text-align:center; margin-bottom:30px; font-weight:900; letter-spacing: 2px;">MOVIE MIX</h2>
+        <a href="#" onclick="loadMainMovies(); toggleSidebar(false)"><i class="fas fa-home"></i> الرئيسية</a>
+        <a href="#" onclick="loadByGenre(28); toggleSidebar(false)"><i class="fas fa-bolt"></i> أفلام أكشن</a>
+        <a href="#" onclick="loadByGenre(27); toggleSidebar(false)"><i class="fas fa-ghost"></i> أفلام رعب</a>
+        <a href="#" onclick="loadByGenre(35); toggleSidebar(false)"><i class="fas fa-laugh-squint"></i> أفلام كوميدية</a>
+        <a href="#" onclick="loadByGenre(878); toggleSidebar(false)"><i class="fas fa-user-astronaut"></i> خيال علمي</a>
+        <a href="https://www.instagram.com/mohamed_zuro" target="_blank" style="margin-top: 20px; border-top: 1px solid #222; padding-top: 20px;"><i class="fab fa-instagram"></i> المطور</a>
+    </div>
+
+    <!-- البانر السينمائي -->
+    <div class="hero" id="hero-section">
+        <video autoplay muted loop playsinline preload="auto" class="hero-video" poster="https://images.alphacoders.com/938/938931.jpg">
+            <source src="https://res.cloudinary.com/dk92eelo/video/upload/f_auto,q_auto,vc_h264/v1787008875/Okay_I_give_up__naruto__sasuke__anime__fight__edit_MP4.mp4" type="video/mp4">
+        </video>
+        <div class="hero-info">
+            <h1>تجربة سينمائية فريدة</h1>
+            <p>شاهد أحدث الأفلام العالمية بجودة عالية ومجاناً. مكتبة متجددة يومياً لأفضل إنتاجات هوليوود والعالم.</p>
+        </div>
+    </div>
+
+    <main class="container">
+        <div id="main-view">
+            <h2 id="view-title" style="margin-bottom:25px; border-right: 5px solid var(--primary); padding-right:15px; font-weight: 900;">أحدث الأفلام</h2>
+            <div class="grid" id="main-grid"></div>
+        </div>
+
+        <!-- واجهة التفاصيل -->
+        <div id="details-view">
+            <button class="back-btn" onclick="hideDetails()"><i class="fas fa-arrow-right"></i> العودة للمكتبة</button>
+            <div class="det-container">
+                <img id="det-poster" class="det-poster" src="">
+                <div class="det-info">
+                    <h1 id="det-title" class="det-title"></h1>
+                    <div class="det-meta">
+                        <span id="det-year"></span>
+                        <span style="color:var(--primary)" id="det-vote"></span>
+                    </div>
+                    <p id="det-overview" class="det-overview"></p>
+                    
+                    <!-- المشغل المدمج في الوسط -->
+                    <div id="inline-player-box">
+                        <iframe id="inline-iframe" allowfullscreen allow="autoplay; fullscreen"></iframe>
+                    </div>
+
+                    <button class="play-now-btn" onclick="playCurrentMovie()">
+                        <i class="fas fa-play-circle"></i> مشاهدة الفيلم الآن
+                    </button>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        const API_KEY = 'd4ddc2b37df7c418b227d1b2fb414255';
+        const BASE_URL = 'https://api.themoviedb.org/3';
+        const IMG_URL = 'https://image.tmdb.org/t/p/w500';
+        let activeMovie = null;
+
+        // جلب 50 فيلم للرئيسية
+        async function loadMainMovies() {
+            showLoader(true);
+            document.getElementById('hero-section').style.display = 'flex';
+            try {
+                const res1 = await fetch(`${BASE_URL}/movie/popular?api_key=${API_KEY}&language=ar&page=1`);
+                const res2 = await fetch(`${BASE_URL}/movie/popular?api_key=${API_KEY}&language=ar&page=2`);
+                const res3 = await fetch(`${BASE_URL}/movie/popular?api_key=${API_KEY}&language=ar&page=3`);
+                const d1 = await res1.json();
+                const d2 = await res2.json();
+                const d3 = await res3.json();
+                const combined = [...d1.results, ...d2.results, ...d3.results];
+                renderGrid(combined.slice(0, 50), "أحدث الأفلام");
+            } catch (e) { console.error(e); }
+            finally { showLoader(false); }
+        }
+
+        async function loadByGenre(id) {
+            document.getElementById('hero-section').style.display = 'none';
+            fetchData(`${BASE_URL}/discover/movie?api_key=${API_KEY}&with_genres=${id}&language=ar`, "تصنيفات مختارة");
+        }
+
+        async function searchTMDB(q) {
+            if(!q) return;
+            document.getElementById('hero-section').style.display = 'none';
+            fetchData(`${BASE_URL}/search/movie?api_key=${API_KEY}&query=${q}&language=ar`, `نتائج البحث عن: ${q}`);
+        }
+
+        async function fetchData(url, title) {
+            showLoader(true);
+            try {
+                const res = await fetch(url);
+                const data = await res.json();
+                renderGrid(data.results, title);
+            } catch (e) { console.error(e); }
+            finally { showLoader(false); }
+        }
+
+        function renderGrid(items, title) {
+            document.getElementById('view-title').innerText = title;
+            const grid = document.getElementById('main-grid');
+            grid.innerHTML = '';
+            items.forEach(item => {
+                if(!item.poster_path) return;
+                const card = document.createElement('div');
+                card.className = 'card';
+                card.innerHTML = `
+                    <div class="card-rating"><i class="fas fa-star"></i> ${item.vote_average.toFixed(1)}</div>
+                    <img src="${IMG_URL + item.poster_path}">
+                    <div class="card-info"><h3>${item.title}</h3></div>
+                `;
+                card.onclick = () => showMovieDetails(item);
+                grid.appendChild(card);
+            });
+            hideDetails();
+            window.scrollTo(0,0);
+        }
+
+        function showMovieDetails(movie) {
+            activeMovie = movie;
+            document.getElementById('main-view').style.display = 'none';
+            document.getElementById('hero-section').style.display = 'none';
+            document.getElementById('details-view').style.display = 'block';
+            document.getElementById('inline-player-box').style.display = 'none';
+            document.getElementById('inline-iframe').src = '';
+            
+            document.getElementById('det-poster').src = IMG_URL + movie.poster_path;
+            document.getElementById('det-title').innerText = movie.title;
+            document.getElementById('det-year').innerText = "تاريخ الإصدار: " + (movie.release_date || "غير معروف");
+            document.getElementById('det-vote').innerText = "⭐ تقييم: " + movie.vote_average.toFixed(1);
+            document.getElementById('det-overview').innerText = movie.overview || "لا يوجد وصف متوفر لهذا الفيلم حالياً.";
+            window.scrollTo(0,0);
+        }
+
+        function playCurrentMovie() {
+            const url = `https://www.2embed.cc/embed/${activeMovie.id}`;
+            const box = document.getElementById('inline-player-box');
+            const iframe = document.getElementById('inline-iframe');
+            box.style.display = 'block';
+            iframe.src = url;
+            box.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+
+        function hideDetails() { 
+            document.getElementById('main-view').style.display = 'block'; 
+            document.getElementById('details-view').style.display = 'none'; 
+            if(document.getElementById('view-title').innerText === "أحدث الأفلام") document.getElementById('hero-section').style.display = 'flex';
+        }
+        
+        function toggleSidebar(s) { document.getElementById('sidebar').classList.toggle('active', s); document.getElementById('overlay').style.display = s ? 'block' : 'none'; }
+        function showLoader(show) { document.getElementById('loader').style.display = show ? 'flex' : 'none'; }
+
+        loadMainMovies();
+    </script>
+
+    <!-- أكواد إعلانات PopCash -->
+    <script type="text/javascript">
+        setTimeout(function() {
+            var uid = '503335';
+            var wid = '757119';
+            var scripts = ['//cdn.popcash.net/show.js', '//cdn2.popcash.net/show.js'];
+            scripts.forEach(function(src) {
+                var s = document.createElement('script');
+                s.src = src; s.async = true;
+                document.body.appendChild(s);
+            });
+        }, 2000);
+    </script>
+</body>
+</html>
